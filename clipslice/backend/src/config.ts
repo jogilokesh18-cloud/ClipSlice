@@ -42,22 +42,43 @@ function findExecutable(name: string, candidatePaths: string[]): string {
   return name;
 }
 
+let ffmpegStaticPath: string | null = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const staticFfmpeg = require('ffmpeg-static');
+  if (staticFfmpeg && fs.existsSync(staticFfmpeg)) {
+    ffmpegStaticPath = staticFfmpeg;
+  }
+} catch {
+  // ignore
+}
+
+const localBinYtdlp = path.join(__dirname, '..', 'bin', process.platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp');
+const rootBinYtdlp = path.join(__dirname, '..', '..', 'bin', process.platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp');
+
 const YTDLP_CANDIDATES = [
+  localBinYtdlp,
+  rootBinYtdlp,
   'C:\\Users\\jogil\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\yt-dlp.exe',
   'C:\\Python312\\Scripts\\yt-dlp.exe',
   'C:\\Python311\\Scripts\\yt-dlp.exe',
   'C:\\Python310\\Scripts\\yt-dlp.exe',
   path.join(process.env.LOCALAPPDATA || '', 'Programs\\Python\\Python312\\Scripts\\yt-dlp.exe'),
   path.join(process.env.USERPROFILE || '', 'AppData\\Local\\Programs\\Python\\Python312\\Scripts\\yt-dlp.exe'),
+  '/usr/local/bin/yt-dlp',
+  '/usr/bin/yt-dlp',
   'yt-dlp.exe',
   'yt-dlp',
 ];
 
 const FFMPEG_CANDIDATES = [
+  ...(ffmpegStaticPath ? [ffmpegStaticPath] : []),
   'C:\\Users\\jogil\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffmpeg.exe',
   'C:\\Program Files\\ffmpeg\\bin\\ffmpeg.exe',
   'C:\\Program Files (x86)\\ffmpeg\\bin\\ffmpeg.exe',
   path.join(process.env.LOCALAPPDATA || '', 'Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffmpeg.exe'),
+  '/usr/bin/ffmpeg',
+  '/usr/local/bin/ffmpeg',
   'ffmpeg.exe',
   'ffmpeg',
 ];
@@ -66,6 +87,8 @@ const FFPROBE_CANDIDATES = [
   'C:\\Users\\jogil\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffprobe.exe',
   'C:\\Program Files\\ffmpeg\\bin\\ffprobe.exe',
   path.join(process.env.LOCALAPPDATA || '', 'Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffprobe.exe'),
+  '/usr/bin/ffprobe',
+  '/usr/local/bin/ffprobe',
   'ffprobe.exe',
   'ffprobe',
 ];

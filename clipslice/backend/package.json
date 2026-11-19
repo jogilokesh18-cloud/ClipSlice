@@ -4,6 +4,7 @@
   "description": "ClipSlice backend - extract trimmed video clips via yt-dlp and FFmpeg",
   "main": "dist/server.js",
   "scripts": {
+    "prebuild": "node scripts/ensure-ytdlp.js",
     "build": "tsc",
     "start": "node dist/server.js",
     "dev": "tsx watch src/server.ts"
@@ -16,6 +17,7 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "express-rate-limit": "^7.3.1",
+    "ffmpeg-static": "^5.3.0",
     "uuid": "^10.0.0"
   },
   "devDependencies": {
