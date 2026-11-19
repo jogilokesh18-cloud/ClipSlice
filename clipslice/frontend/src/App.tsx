@@ -10,6 +10,7 @@ import { PreviewDownloadCard } from './components/PreviewDownloadCard';
 import { Toast, ToastMessage } from './components/Toast';
 import { VideoMetadata, OutputFormat, JobProgress, ClipSpeedMode } from './types';
 import { Scissors, ShieldCheck, Sparkles, Zap } from 'lucide-react';
+import { API_BASE } from './utils/apiConfig';
 
 export const App: React.FC = () => {
   const [url, setUrl] = useState<string>('');
@@ -59,7 +60,7 @@ export const App: React.FC = () => {
     setJobId(null);
 
     try {
-      const res = await fetch('/api/metadata', {
+      const res = await fetch(`${API_BASE}/api/metadata`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: targetUrl }),
@@ -108,7 +109,7 @@ export const App: React.FC = () => {
     });
 
     try {
-      const res = await fetch('/api/clip', {
+      const res = await fetch(`${API_BASE}/api/clip`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -154,7 +155,7 @@ export const App: React.FC = () => {
       clearInterval(pollingRef.current);
     }
 
-    const sse = new EventSource(`/api/progress/${activeJobId}`);
+    const sse = new EventSource(`${API_BASE}/api/progress/${activeJobId}`);
     eventSourceRef.current = sse;
 
     sse.onmessage = (event) => {
@@ -177,7 +178,7 @@ export const App: React.FC = () => {
       if (!pollingRef.current) {
         pollingRef.current = window.setInterval(async () => {
           try {
-            const res = await fetch(`/api/job/${activeJobId}`);
+            const res = await fetch(`${API_BASE}/api/job/${activeJobId}`);
             if (res.ok) {
               const d = await res.json();
               if (d.success && d.job) {
@@ -199,7 +200,7 @@ export const App: React.FC = () => {
   const handleCancelJob = async () => {
     if (!jobId) return;
     try {
-      await fetch(`/api/job/${jobId}`, { method: 'DELETE' });
+      await fetch(`${API_BASE}/api/job/${jobId}`, { method: 'DELETE' });
     } catch {
       // ignore
     }

@@ -2,6 +2,7 @@ import React from 'react';
 import { Download, Film, Music, Clock, RotateCcw, Check, Sparkles } from 'lucide-react';
 import { JobProgress } from '../types';
 import { formatBytes } from '../utils/timeFormat';
+import { API_BASE } from '../utils/apiConfig';
 
 interface PreviewDownloadCardProps {
   progress: JobProgress;
@@ -9,8 +10,8 @@ interface PreviewDownloadCardProps {
 }
 
 export const PreviewDownloadCard: React.FC<PreviewDownloadCardProps> = ({ progress, onReset }) => {
-  const streamUrl = `/api/stream/${progress.id}`;
-  const downloadUrl = `/api/download/${progress.id}`;
+  const streamUrl = `${API_BASE}/api/stream/${progress.id}`;
+  const downloadUrl = `${API_BASE}/api/download/${progress.id}`;
   const isAudio = progress.mimeType?.includes('audio') || progress.filename?.endsWith('.mp3');
 
   return (
