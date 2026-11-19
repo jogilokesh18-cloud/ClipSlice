@@ -4,9 +4,9 @@ backend/node_modules/
 frontend/node_modules/
 
 # Build artifacts
-dist/
 backend/dist/
-frontend/dist/
+!frontend/dist/
+!frontend/dist/**
 
 # Temporary video processing clips and parts
 temp/

@@ -7,12 +7,13 @@ clipslice/backend/node_modules/
 clipslice/frontend/node_modules/
 
 # Build artifacts
-dist/
-*/dist/
 backend/dist/
-frontend/dist/
 clipslice/backend/dist/
-clipslice/frontend/dist/
+# Allow pre-built frontend dist for instant, error-free Vercel and cloud deployments
+!dist/
+!dist/**
+!clipslice/frontend/dist/
+!clipslice/frontend/dist/**
 
 # Temporary video processing clips and parts
 temp/

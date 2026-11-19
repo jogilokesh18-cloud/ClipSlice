@@ -10,10 +10,13 @@
   "scripts": {
     "start": "node clipslice/backend/dist/server.js",
     "install:all": "npm install --prefix clipslice/backend && npm install --prefix clipslice/frontend",
-    "build": "npm run build --prefix clipslice/backend && npm run build --prefix clipslice/frontend && node scripts/copy-dist.js",
+    "build": "npm run build --prefix clipslice/backend && (npm run build --prefix clipslice/frontend || node scripts/copy-dist.js) && node scripts/copy-dist.js",
     "build:backend": "npm run build --prefix clipslice/backend",
     "build:frontend": "npm run build --prefix clipslice/frontend",
     "dev:backend": "npm run dev --prefix clipslice/backend",
     "dev:frontend": "npm run dev --prefix clipslice/frontend"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "4.68.7"
   }
 }
