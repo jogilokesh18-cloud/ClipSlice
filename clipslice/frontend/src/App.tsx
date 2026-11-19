@@ -66,9 +66,25 @@ export const App: React.FC = () => {
         body: JSON.stringify({ url: targetUrl }),
       });
 
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Failed to fetch video details.');
+      const text = await res.text();
+      let data: any = null;
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch {
+        // Not a JSON response
+      }
+
+      if (!res.ok) {
+        if (res.status === 404) {
+          throw new Error('API route not found (404). If hosted on Vercel, connect your Render backend URL via VITE_API_URL or run locally at http://localhost:5000.');
+        } else if (res.status === 502 || res.status === 504) {
+          throw new Error(`Backend server is starting up (${res.status}). Please wait 10 seconds and try again.`);
+        }
+        throw new Error(data?.error || `Server responded with status ${res.status}`);
+      }
+
+      if (!data || !data.success) {
+        throw new Error(data?.error || 'Failed to fetch video details.');
       }
 
       const meta: VideoMetadata = data.metadata;
@@ -123,9 +139,16 @@ export const App: React.FC = () => {
         }),
       });
 
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Failed to start clip trimming.');
+      const text = await res.text();
+      let data: any = null;
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch {
+        // Not a JSON response
+      }
+
+      if (!res.ok || !data?.success) {
+        throw new Error(data?.error || `Failed to start clip trimming (HTTP ${res.status}).`);
       }
 
       const newJobId = data.jobId;
