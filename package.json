@@ -3,9 +3,16 @@
   "version": "1.0.0",
   "private": true,
   "description": "ClipSlice — Full-Stack Video Trimmer & Segment Downloader",
+  "workspaces": [
+    "clipslice/backend",
+    "clipslice/frontend"
+  ],
   "scripts": {
     "start": "node clipslice/backend/dist/server.js",
+    "install:all": "npm install --prefix clipslice/backend && npm install --prefix clipslice/frontend",
     "build": "npm run build --prefix clipslice/backend && npm run build --prefix clipslice/frontend",
+    "build:backend": "npm run build --prefix clipslice/backend",
+    "build:frontend": "npm run build --prefix clipslice/frontend",
     "dev:backend": "npm run dev --prefix clipslice/backend",
     "dev:frontend": "npm run dev --prefix clipslice/frontend"
   }
