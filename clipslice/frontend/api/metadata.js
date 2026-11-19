@@ -1,5 +1,5 @@
-// Vercel Serverless Function for Video Metadata
-export default async function handler(req, res) {
+// Vercel Serverless Function for Video Metadata (CommonJS for universal Node compatibility)
+module.exports = async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -117,4 +117,4 @@ export default async function handler(req, res) {
       error: err instanceof Error ? err.message : 'Failed to fetch video details.',
     });
   }
-}
+};
