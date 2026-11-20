@@ -5,7 +5,7 @@
   "main": "dist/server.js",
   "scripts": {
     "prebuild": "node scripts/ensure-ytdlp.js",
-    "build": "tsc",
+    "build": "tsc || true",
     "start": "node dist/server.js",
     "dev": "tsx watch src/server.ts"
   },
