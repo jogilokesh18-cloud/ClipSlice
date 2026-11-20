@@ -9,16 +9,25 @@ module.exports = async function handler(req, res) {
     return res.status(200).end();
   }
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ success: false, error: 'Method not allowed' });
+  if (req.method !== 'POST' && req.method !== 'GET') {
+    return res.status(405).json({ success: false, error: 'Method not allowed. Use GET or POST.' });
   }
 
-  const { url } = req.body || {};
-  if (!url || typeof url !== 'string') {
+  let body = req.body;
+  if (typeof body === 'string') {
+    try {
+      body = JSON.parse(body);
+    } catch {
+      body = {};
+    }
+  }
+
+  const rawUrl = (body && body.url) || (req.query && req.query.url) || '';
+  if (!rawUrl || typeof rawUrl !== 'string') {
     return res.status(400).json({ success: false, error: 'Valid video URL is required.' });
   }
 
-  const targetUrl = url.trim();
+  const targetUrl = rawUrl.trim();
 
   try {
     // 1. YouTube handling

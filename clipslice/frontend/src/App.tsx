@@ -52,6 +52,78 @@ export const App: React.FC = () => {
     });
   };
 
+  // Client-side direct metadata fallback for when hosted without backend or on Vercel
+  const fetchClientDirectMetadata = async (targetUrl: string): Promise<VideoMetadata> => {
+    const url = targetUrl.trim();
+
+    // 1. YouTube handling
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
+      const res = await fetch(oembedUrl);
+      if (!res.ok) {
+        throw new Error('Video is private, restricted, or not found on YouTube.');
+      }
+      const data = await res.json();
+      return {
+        title: data.title || 'YouTube Video',
+        thumbnail: data.thumbnail_url || '',
+        duration: 300,
+        uploader: data.author_name || 'YouTube',
+        platform: 'youtube',
+        displayPlatform: 'YouTube',
+        url,
+        resolutions: [
+          { label: 'Best', height: 1080 },
+          { label: '1080p', height: 1080 },
+          { label: '720p', height: 720 },
+          { label: '480p', height: 480 },
+          { label: '360p', height: 360 },
+        ],
+      };
+    }
+
+    // 2. Vimeo handling
+    if (url.includes('vimeo.com')) {
+      const oembedUrl = `https://vimeo.com/api/oembed.json?url=${encodeURIComponent(url)}`;
+      const res = await fetch(oembedUrl);
+      if (!res.ok) {
+        throw new Error('Vimeo video not found or private.');
+      }
+      const data = await res.json();
+      return {
+        title: data.title || 'Vimeo Video',
+        thumbnail: data.thumbnail_url || '',
+        duration: data.duration || 180,
+        uploader: data.author_name || 'Vimeo',
+        platform: 'vimeo',
+        displayPlatform: 'Vimeo',
+        url,
+        resolutions: [
+          { label: 'Best', height: 1080 },
+          { label: '1080p', height: 1080 },
+          { label: '720p', height: 720 },
+          { label: '480p', height: 480 },
+        ],
+      };
+    }
+
+    // 3. Fallback
+    return {
+      title: 'Web Video',
+      thumbnail: '',
+      duration: 180,
+      uploader: 'Direct Web Video',
+      platform: 'direct',
+      displayPlatform: 'Direct Video',
+      url,
+      resolutions: [
+        { label: 'Best', height: 1080 },
+        { label: '720p', height: 720 },
+        { label: '480p', height: 480 },
+      ],
+    };
+  };
+
   // Fetch metadata when user submits URL
   const handleFetchMetadata = async (targetUrl: string) => {
     setIsLoadingMeta(true);
@@ -59,6 +131,9 @@ export const App: React.FC = () => {
     setProgress(null);
     setJobId(null);
 
+    let meta: VideoMetadata | null = null;
+
+    // 1. Try server endpoint first
     try {
       const res = await fetch(`${API_BASE}/api/metadata`, {
         method: 'POST',
@@ -66,40 +141,36 @@ export const App: React.FC = () => {
         body: JSON.stringify({ url: targetUrl }),
       });
 
-      const text = await res.text();
-      let data: any = null;
-      try {
-        data = text ? JSON.parse(text) : null;
-      } catch {
-        // Not a JSON response
-      }
-
-      if (!res.ok) {
-        if (res.status === 404) {
-          throw new Error('API route not found (404). If hosted on Vercel, connect your Render backend URL via VITE_API_URL or run locally at http://localhost:5000.');
-        } else if (res.status === 502 || res.status === 504) {
-          throw new Error(`Backend server is starting up (${res.status}). Please wait 10 seconds and try again.`);
+      if (res.ok) {
+        const text = await res.text();
+        const data = text ? JSON.parse(text) : null;
+        if (data && data.success && data.metadata) {
+          meta = data.metadata;
         }
-        throw new Error(data?.error || `Server responded with status ${res.status}`);
       }
-
-      if (!data || !data.success) {
-        throw new Error(data?.error || 'Failed to fetch video details.');
-      }
-
-      const meta: VideoMetadata = data.metadata;
-      setMetadata(meta);
-      setStartTime(0);
-      // Default clip range: first 30 seconds or full video if shorter
-      setEndTime(meta.duration > 0 ? Math.min(30, meta.duration) : 30);
-      setQuality('Best');
-      showToast('success', `Found "${meta.title}" (${meta.displayPlatform})`);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Could not fetch video information.';
-      showToast('error', msg, 'Metadata Error');
-    } finally {
-      setIsLoadingMeta(false);
+    } catch {
+      // Backend not running or network error - fall back cleanly
     }
+
+    // 2. If backend didn't return metadata, use instant direct oEmbed fallback
+    if (!meta) {
+      try {
+        meta = await fetchClientDirectMetadata(targetUrl);
+      } catch (clientErr: unknown) {
+        const msg = clientErr instanceof Error ? clientErr.message : 'Could not fetch video information.';
+        showToast('error', msg, 'Metadata Error');
+        setIsLoadingMeta(false);
+        return;
+      }
+    }
+
+    setMetadata(meta);
+    setStartTime(0);
+    // Default clip range: first 30 seconds or full video if shorter
+    setEndTime(meta.duration > 0 ? Math.min(30, meta.duration) : 30);
+    setQuality('Best');
+    showToast('success', `Found "${meta.title}" (${meta.displayPlatform})`);
+    setIsLoadingMeta(false);
   };
 
   // Handle Start Slicing
@@ -155,7 +226,10 @@ export const App: React.FC = () => {
       setJobId(newJobId);
       subscribeToJobProgress(newJobId);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to slice clip.';
+      let msg = err instanceof Error ? err.message : 'Failed to slice clip.';
+      if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+        msg = 'Cannot connect to video processing service. If hosted on Vercel, deploy your backend on Render (Docker) or run locally using start.bat.';
+      }
       showToast('error', msg, 'Processing Failed');
       setProgress({
         id: 'error',
