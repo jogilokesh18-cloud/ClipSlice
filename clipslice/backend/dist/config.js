@@ -92,4 +92,17 @@ const FFPROBE_CANDIDATES = [
 exports.YTDLP_PATH = findExecutable('yt-dlp', YTDLP_CANDIDATES);
 exports.FFMPEG_PATH = findExecutable('ffmpeg', FFMPEG_CANDIDATES);
 exports.FFPROBE_PATH = findExecutable('ffprobe', FFPROBE_CANDIDATES);
+// Ensure binaries have executable permissions on Linux/macOS
+if (process.platform !== 'win32') {
+    [exports.YTDLP_PATH, exports.FFMPEG_PATH, exports.FFPROBE_PATH].forEach((bin) => {
+        try {
+            if (bin && fs_1.default.existsSync(bin)) {
+                fs_1.default.chmodSync(bin, 0o755);
+            }
+        }
+        catch {
+            // ignore
+        }
+    });
+}
 //# sourceMappingURL=config.js.map

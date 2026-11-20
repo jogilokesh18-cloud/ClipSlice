@@ -13,6 +13,9 @@ import { startClipDownload } from './downloader';
 
 const app = express();
 
+// Trust reverse proxy (Render, Railway, Vercel, Nginx, Cloudflare)
+app.set('trust proxy', 1);
+
 // Enable CORS
 app.use(cors({
   origin: '*',
@@ -30,6 +33,7 @@ const globalLimiter = rateLimit({
   message: { success: false, error: 'Too many requests. Please slow down and try again shortly.' },
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { trustProxy: false },
 });
 app.use(globalLimiter);
 
@@ -40,6 +44,7 @@ const clipLimiter = rateLimit({
   message: { success: false, error: 'Clip processing rate limit exceeded. Please wait a few minutes before slicing more clips.' },
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { trustProxy: false },
 });
 
 /**
@@ -341,10 +346,11 @@ app.use((_req: Request, res: Response) => {
 
 // Global error handler
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+  const message = err instanceof Error ? err.message : 'Internal server error occurred.';
   console.error('[Unhandled Server Error]:', err);
   res.status(500).json({
     success: false,
-    error: 'Internal server error occurred.',
+    error: message,
   });
 });
 

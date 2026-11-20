@@ -16,6 +16,8 @@ const metadata_1 = require("./metadata");
 const jobManager_1 = require("./jobManager");
 const downloader_1 = require("./downloader");
 const app = (0, express_1.default)();
+// Trust reverse proxy (Render, Railway, Vercel, Nginx, Cloudflare)
+app.set('trust proxy', 1);
 // Enable CORS
 app.use((0, cors_1.default)({
     origin: '*',
@@ -31,6 +33,7 @@ const globalLimiter = (0, express_rate_limit_1.default)({
     message: { success: false, error: 'Too many requests. Please slow down and try again shortly.' },
     standardHeaders: true,
     legacyHeaders: false,
+    validate: { trustProxy: false },
 });
 app.use(globalLimiter);
 // Specific Rate Limiter for clip processing jobs: 15 clips per 10 minutes per IP
@@ -40,6 +43,7 @@ const clipLimiter = (0, express_rate_limit_1.default)({
     message: { success: false, error: 'Clip processing rate limit exceeded. Please wait a few minutes before slicing more clips.' },
     standardHeaders: true,
     legacyHeaders: false,
+    validate: { trustProxy: false },
 });
 /**
  * Health check & diagnostic endpoint
@@ -303,10 +307,11 @@ app.use((_req, res) => {
 });
 // Global error handler
 app.use((err, _req, res, _next) => {
+    const message = err instanceof Error ? err.message : 'Internal server error occurred.';
     console.error('[Unhandled Server Error]:', err);
     res.status(500).json({
         success: false,
-        error: 'Internal server error occurred.',
+        error: message,
     });
 });
 const server = app.listen(config_1.PORT, '0.0.0.0', () => {
