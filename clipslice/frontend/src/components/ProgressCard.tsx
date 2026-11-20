@@ -121,8 +121,37 @@ export const ProgressCard: React.FC<ProgressCardProps> = ({ progress, onCancel }
 
       {/* Error Details */}
       {isError && (
-        <div className="p-3 bg-red-950/30 border border-red-800/40 rounded-xl text-xs text-red-300">
-          {progress.error || 'An unexpected error occurred while processing the video.'}
+        <div className="p-4 bg-red-950/30 border border-red-800/40 rounded-xl text-xs text-red-300 space-y-3">
+          <p>{progress.error || 'An unexpected error occurred while processing the video.'}</p>
+          {(progress.error?.includes('Vercel serverless') || progress.error?.includes('Cannot connect')) && (
+            <div className="pt-2 border-t border-red-900/40 space-y-1.5">
+              <span className="text-[11px] text-zinc-400 font-medium block">
+                Connect your Render backend URL (e.g. https://clipslice.onrender.com):
+              </span>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  type="text"
+                  placeholder="https://your-service.onrender.com"
+                  id="renderBackendUrlInput"
+                  defaultValue={typeof window !== 'undefined' ? localStorage.getItem('CLIPSLICE_API_URL') || '' : ''}
+                  className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-cyan-400"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const el = document.getElementById('renderBackendUrlInput') as HTMLInputElement;
+                    if (el?.value) {
+                      localStorage.setItem('CLIPSLICE_API_URL', el.value.trim().replace(/\/+$/, ''));
+                      window.location.reload();
+                    }
+                  }}
+                  className="bg-cyan-500 hover:bg-cyan-400 text-zinc-950 font-bold px-3 py-1.5 rounded-lg text-xs transition-colors shrink-0"
+                >
+                  Save & Connect
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
