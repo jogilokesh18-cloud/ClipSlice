@@ -24,8 +24,7 @@ function startClipDownload(options) {
         filename: cleanDownloadName,
         mimeType: format === 'mp3' ? 'audio/mpeg' : 'video/mp4',
     });
-    const ffmpegDir = path_1.default.dirname(config_1.FFMPEG_PATH);
-    const ffmpegLoc = (ffmpegDir && ffmpegDir !== '.' && fs_1.default.existsSync(ffmpegDir)) ? ffmpegDir : config_1.FFMPEG_PATH;
+    const ffmpegLoc = config_1.FFMPEG_PATH;
     // Check for cookies file or environment variable (bypasses YouTube datacenter bot detection)
     const possibleCookiePaths = [
         path_1.default.join(__dirname, '..', 'cookies.txt'),

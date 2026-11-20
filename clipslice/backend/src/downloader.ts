@@ -32,8 +32,7 @@ export function startClipDownload(options: ProcessClipOptions): void {
     mimeType: format === 'mp3' ? 'audio/mpeg' : 'video/mp4',
   });
 
-  const ffmpegDir = path.dirname(FFMPEG_PATH);
-  const ffmpegLoc = (ffmpegDir && ffmpegDir !== '.' && fs.existsSync(ffmpegDir)) ? ffmpegDir : FFMPEG_PATH;
+  const ffmpegLoc = FFMPEG_PATH;
 
   // Check for cookies file or environment variable (bypasses YouTube datacenter bot detection)
   const possibleCookiePaths = [
