@@ -8,7 +8,6 @@ const cors_1 = __importDefault(require("cors"));
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const uuid_1 = require("uuid");
-const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
 const config_1 = require("./config");
 const urlValidator_1 = require("./urlValidator");
 const timeUtils_1 = require("./timeUtils");
@@ -26,25 +25,6 @@ app.use((0, cors_1.default)({
     exposedHeaders: ['Content-Range', 'Accept-Ranges', 'Content-Length', 'Content-Disposition'],
 }));
 app.use(express_1.default.json());
-// Global Rate Limiter: 100 requests per minute
-const globalLimiter = (0, express_rate_limit_1.default)({
-    windowMs: 60 * 1000,
-    max: 100,
-    message: { success: false, error: 'Too many requests. Please slow down and try again shortly.' },
-    standardHeaders: true,
-    legacyHeaders: false,
-    validate: { trustProxy: false },
-});
-app.use(globalLimiter);
-// Specific Rate Limiter for clip processing jobs: 15 clips per 10 minutes per IP
-const clipLimiter = (0, express_rate_limit_1.default)({
-    windowMs: 10 * 60 * 1000,
-    max: 15,
-    message: { success: false, error: 'Clip processing rate limit exceeded. Please wait a few minutes before slicing more clips.' },
-    standardHeaders: true,
-    legacyHeaders: false,
-    validate: { trustProxy: false },
-});
 /**
  * Health check & diagnostic endpoint
  */
@@ -95,7 +75,7 @@ app.post('/api/metadata', async (req, res) => {
  * POST /api/clip
  * Initiates the download-and-cut of the requested segment
  */
-app.post('/api/clip', clipLimiter, async (req, res) => {
+app.post('/api/clip', async (req, res) => {
     try {
         const { url, startTime, endTime, format = 'mp4', quality = 'best', title, mode = 'fast' } = req.body;
         if (!url || typeof url !== 'string') {

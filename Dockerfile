@@ -23,8 +23,8 @@ COPY clipslice/backend/package*.json ./clipslice/backend/
 COPY clipslice/frontend/package*.json ./clipslice/frontend/
 
 # Install dependencies
-RUN cd clipslice/backend && npm ci
-RUN cd clipslice/frontend && npm ci
+RUN cd clipslice/backend && npm install --no-audit
+RUN cd clipslice/frontend && npm install --no-audit
 
 # Copy full application source code
 COPY . .

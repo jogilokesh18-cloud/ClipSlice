@@ -219,7 +219,15 @@ export const App: React.FC = () => {
       }
 
       if (!res.ok || !data?.success) {
-        throw new Error(data?.error || `Failed to start clip trimming (HTTP ${res.status}).`);
+        let errText = data?.error;
+        if (!errText) {
+          if (res.status === 500 || res.status === 405 || res.status === 404) {
+            errText = 'Cannot connect to video processing service. If hosted on Vercel, please connect your Render backend URL below or open your live Render app link directly.';
+          } else {
+            errText = `Processing service error (HTTP ${res.status}).`;
+          }
+        }
+        throw new Error(errText);
       }
 
       const newJobId = data.jobId;

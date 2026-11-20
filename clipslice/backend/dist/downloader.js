@@ -89,10 +89,23 @@ function startClipDownload(options) {
     // Target video URL
     args.push(url);
     console.log(`[Downloader] Starting job ${jobId} (${mode.toUpperCase()} mode): clipping ${(0, timeUtils_1.formatSecondsToTime)(startTime)} to ${(0, timeUtils_1.formatSecondsToTime)(endTime)}`);
-    const child = (0, child_process_1.spawn)(config_1.YTDLP_PATH, args, {
-        stdio: ['ignore', 'pipe', 'pipe'],
-        shell: false,
-    });
+    let child;
+    try {
+        child = (0, child_process_1.spawn)(config_1.YTDLP_PATH, args, {
+            stdio: ['ignore', 'pipe', 'pipe'],
+            shell: false,
+        });
+    }
+    catch (spawnErr) {
+        const errMsg = spawnErr instanceof Error ? spawnErr.message : 'Failed to launch yt-dlp';
+        console.error('[Downloader Spawn Error]:', errMsg);
+        jobManager_1.jobManager.updateJob(jobId, {
+            status: 'error',
+            stage: 'Failed to launch downloader',
+            error: errMsg,
+        });
+        return;
+    }
     jobManager_1.jobManager.setChildProcess(jobId, child);
     let stderrBuffer = '';
     child.stdout?.on('data', (data) => {

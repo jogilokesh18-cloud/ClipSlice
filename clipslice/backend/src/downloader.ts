@@ -113,10 +113,22 @@ export function startClipDownload(options: ProcessClipOptions): void {
 
   console.log(`[Downloader] Starting job ${jobId} (${mode.toUpperCase()} mode): clipping ${formatSecondsToTime(startTime)} to ${formatSecondsToTime(endTime)}`);
 
-  const child: ChildProcess = spawn(YTDLP_PATH, args, {
-    stdio: ['ignore', 'pipe', 'pipe'],
-    shell: false,
-  });
+  let child: ChildProcess;
+  try {
+    child = spawn(YTDLP_PATH, args, {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      shell: false,
+    });
+  } catch (spawnErr) {
+    const errMsg = spawnErr instanceof Error ? spawnErr.message : 'Failed to launch yt-dlp';
+    console.error('[Downloader Spawn Error]:', errMsg);
+    jobManager.updateJob(jobId, {
+      status: 'error',
+      stage: 'Failed to launch downloader',
+      error: errMsg,
+    });
+    return;
+  }
 
   jobManager.setChildProcess(jobId, child);
 

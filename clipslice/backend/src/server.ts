@@ -3,7 +3,6 @@ import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import rateLimit from 'express-rate-limit';
 import { PORT, TEMP_DIR, YTDLP_PATH, FFMPEG_PATH, FFPROBE_PATH } from './config';
 import { validateVideoUrl } from './urlValidator';
 import { parseTimeToSeconds, validateTimeRange, formatSecondsToTime } from './timeUtils';
@@ -25,27 +24,6 @@ app.use(cors({
 }));
 
 app.use(express.json());
-
-// Global Rate Limiter: 100 requests per minute
-const globalLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 100,
-  message: { success: false, error: 'Too many requests. Please slow down and try again shortly.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-  validate: { trustProxy: false },
-});
-app.use(globalLimiter);
-
-// Specific Rate Limiter for clip processing jobs: 15 clips per 10 minutes per IP
-const clipLimiter = rateLimit({
-  windowMs: 10 * 60 * 1000,
-  max: 15,
-  message: { success: false, error: 'Clip processing rate limit exceeded. Please wait a few minutes before slicing more clips.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-  validate: { trustProxy: false },
-});
 
 /**
  * Health check & diagnostic endpoint
@@ -99,7 +77,7 @@ app.post('/api/metadata', async (req: Request, res: Response) => {
  * POST /api/clip
  * Initiates the download-and-cut of the requested segment
  */
-app.post('/api/clip', clipLimiter, async (req: Request, res: Response) => {
+app.post('/api/clip', async (req: Request, res: Response) => {
   try {
     const { url, startTime, endTime, format = 'mp4', quality = 'best', title, mode = 'fast' } = req.body;
 
