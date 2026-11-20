@@ -1,7 +1,12 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.fetchVideoMetadata = fetchVideoMetadata;
 const child_process_1 = require("child_process");
+const path_1 = __importDefault(require("path"));
+const fs_1 = __importDefault(require("fs"));
 const config_1 = require("./config");
 const urlValidator_1 = require("./urlValidator");
 function extractResolutions(formats) {
@@ -77,6 +82,12 @@ function selectBestThumbnail(data) {
 async function fetchVideoMetadata(rawUrl) {
     const validated = (0, urlValidator_1.validateVideoUrl)(rawUrl);
     return new Promise((resolve, reject) => {
+        const possibleCookiePaths = [
+            path_1.default.join(__dirname, '..', 'cookies.txt'),
+            path_1.default.join(process.cwd(), 'cookies.txt'),
+            path_1.default.join(process.cwd(), 'clipslice', 'backend', 'cookies.txt'),
+        ];
+        const cookiePath = possibleCookiePaths.find((p) => fs_1.default.existsSync(p));
         const args = [
             '--dump-single-json',
             '--no-download',
@@ -84,8 +95,13 @@ async function fetchVideoMetadata(rawUrl) {
             '--no-playlist',
             '--skip-download',
             '--js-runtimes', 'node',
-            validated.normalized,
+            '--extractor-args', 'youtube:player_client=default,ios,android,web',
+            '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
         ];
+        if (cookiePath) {
+            args.push('--cookies', cookiePath);
+        }
+        args.push(validated.normalized);
         const child = (0, child_process_1.spawn)(config_1.YTDLP_PATH, args, {
             stdio: ['ignore', 'pipe', 'pipe'],
             shell: false,

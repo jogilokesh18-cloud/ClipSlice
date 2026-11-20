@@ -26,6 +26,23 @@ function startClipDownload(options) {
     });
     const ffmpegDir = path_1.default.dirname(config_1.FFMPEG_PATH);
     const ffmpegLoc = (ffmpegDir && ffmpegDir !== '.' && fs_1.default.existsSync(ffmpegDir)) ? ffmpegDir : config_1.FFMPEG_PATH;
+    // Check for cookies file or environment variable (bypasses YouTube datacenter bot detection)
+    const possibleCookiePaths = [
+        path_1.default.join(__dirname, '..', 'cookies.txt'),
+        path_1.default.join(process.cwd(), 'cookies.txt'),
+        path_1.default.join(process.cwd(), 'clipslice', 'backend', 'cookies.txt'),
+    ];
+    let cookiePath = possibleCookiePaths.find((p) => fs_1.default.existsSync(p));
+    if (!cookiePath && process.env.YTDLP_COOKIES) {
+        try {
+            const envCookieFile = path_1.default.join(config_1.TEMP_DIR, 'cookies_env.txt');
+            fs_1.default.writeFileSync(envCookieFile, process.env.YTDLP_COOKIES, 'utf-8');
+            cookiePath = envCookieFile;
+        }
+        catch {
+            // ignore
+        }
+    }
     // Construct arguments array for safe child_process.spawn (no shell execution)
     const args = [
         '--no-playlist',
@@ -35,11 +52,17 @@ function startClipDownload(options) {
         '--ffmpeg-location', ffmpegLoc,
         // Node.js JS challenge solver: unlocks full 1080p, 1440p, 4K 60fps formats at high download speeds
         '--js-runtimes', 'node',
+        // Fallback player clients for YouTube cloud datacenter extraction
+        '--extractor-args', 'youtube:player_client=default,ios,android,web',
+        '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
         // Parallel fragment downloads
         '--concurrent-fragments', '4',
         // Crucial: yt-dlp downloads ONLY the required time section
         '--download-sections', `*${startTime}-${endTime}`,
     ];
+    if (cookiePath) {
+        args.push('--cookies', cookiePath);
+    }
     // Cutting mode:
     // 'fast' (default) uses direct stream copy (-c copy) which finishes in seconds without CPU re-encoding.
     // 'accurate' forces keyframe cuts with ultrafast multi-threaded encoding at visually lossless quality.
@@ -182,6 +205,12 @@ function startClipDownload(options) {
             }
             else if (errorMsg.includes('Section') && errorMsg.includes('out of range')) {
                 errorMsg = 'Requested time section is out of range for this video.';
+            }
+            else if (errorMsg.includes('Failed to extract any player response') ||
+                errorMsg.includes('Sign in to confirm') ||
+                errorMsg.includes('bot') ||
+                errorMsg.includes('HTTP Error 429')) {
+                errorMsg = 'YouTube has temporarily rate-limited automated downloads from this cloud server IP. To slice this video without limits, run ClipSlice locally on your computer via start.bat (residential IPs are never blocked), or configure a YouTube cookies file.';
             }
             jobManager_1.jobManager.updateJob(jobId, {
                 status: 'error',

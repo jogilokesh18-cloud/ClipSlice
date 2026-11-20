@@ -8,21 +8,18 @@ const isWin = process.platform === 'win32';
 const targetBinary = path.join(binDir, isWin ? 'yt-dlp.exe' : 'yt-dlp');
 
 async function ensureYtDlp() {
-  // Check if system already has yt-dlp in PATH
-  try {
-    const cmd = isWin ? 'where.exe yt-dlp' : 'which yt-dlp';
-    const found = execSync(cmd, { stdio: ['pipe', 'pipe', 'ignore'], encoding: 'utf-8' }).trim();
-    if (found) {
-      console.log(`[Setup] System yt-dlp already available at: ${found}`);
-      return;
-    }
-  } catch {
-    // Not found in PATH
+  if (!fs.existsSync(binDir)) {
+    fs.mkdirSync(binDir, { recursive: true });
   }
 
   // Check if already downloaded in local bin
   if (fs.existsSync(targetBinary)) {
-    console.log(`[Setup] Local yt-dlp binary already exists at: ${targetBinary}`);
+    console.log(`[Setup] Local yt-dlp binary exists at: ${targetBinary}`);
+    try {
+      if (!isWin) {
+        fs.chmodSync(targetBinary, '755');
+      }
+    } catch {}
     return;
   }
 

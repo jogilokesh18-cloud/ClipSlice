@@ -19,7 +19,14 @@ function findExecutable(name: string, candidatePaths: string[]): string {
     return process.env[envName]!;
   }
 
-  // Check PATH first via where/which
+  // Check candidate paths FIRST so our bundled latest binaries take priority over outdated OS packages
+  for (const candidate of candidatePaths) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  // Check PATH second via where/which
   try {
     const cmd = process.platform === 'win32' ? `where.exe ${name}` : `which ${name}`;
     const output = execSync(cmd, { stdio: ['pipe', 'pipe', 'ignore'], encoding: 'utf-8' }).trim();
@@ -28,14 +35,7 @@ function findExecutable(name: string, candidatePaths: string[]): string {
       return firstLine;
     }
   } catch {
-    // Ignore and proceed to candidates
-  }
-
-  // Check candidate paths
-  for (const candidate of candidatePaths) {
-    if (fs.existsSync(candidate)) {
-      return candidate;
-    }
+    // Ignore and proceed
   }
 
   // Default to naked command name for system PATH lookup

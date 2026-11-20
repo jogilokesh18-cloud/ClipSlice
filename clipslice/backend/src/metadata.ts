@@ -1,4 +1,6 @@
 import { spawn } from 'child_process';
+import path from 'path';
+import fs from 'fs';
 import { YTDLP_PATH } from './config';
 import { validateVideoUrl, ValidatedUrl } from './urlValidator';
 
@@ -129,6 +131,13 @@ export async function fetchVideoMetadata(rawUrl: string): Promise<VideoMetadata>
   const validated: ValidatedUrl = validateVideoUrl(rawUrl);
 
   return new Promise((resolve, reject) => {
+    const possibleCookiePaths = [
+      path.join(__dirname, '..', 'cookies.txt'),
+      path.join(process.cwd(), 'cookies.txt'),
+      path.join(process.cwd(), 'clipslice', 'backend', 'cookies.txt'),
+    ];
+    const cookiePath = possibleCookiePaths.find((p) => fs.existsSync(p));
+
     const args = [
       '--dump-single-json',
       '--no-download',
@@ -136,8 +145,15 @@ export async function fetchVideoMetadata(rawUrl: string): Promise<VideoMetadata>
       '--no-playlist',
       '--skip-download',
       '--js-runtimes', 'node',
-      validated.normalized,
+      '--extractor-args', 'youtube:player_client=default,ios,android,web',
+      '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
     ];
+
+    if (cookiePath) {
+      args.push('--cookies', cookiePath);
+    }
+
+    args.push(validated.normalized);
 
     const child = spawn(YTDLP_PATH, args, {
       stdio: ['ignore', 'pipe', 'pipe'],
