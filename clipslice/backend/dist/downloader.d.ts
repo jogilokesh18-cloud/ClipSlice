@@ -7,5 +7,6 @@ export interface ProcessClipOptions {
     format: 'mp4' | 'mp3';
     quality: string;
     mode?: 'fast' | 'accurate';
+    cookies?: string;
 }
 export declare function startClipDownload(options: ProcessClipOptions): void;

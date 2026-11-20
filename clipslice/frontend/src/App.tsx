@@ -196,6 +196,8 @@ export const App: React.FC = () => {
     });
 
     try {
+      const savedCookies = typeof window !== 'undefined' ? localStorage.getItem('CLIPSLICE_COOKIES') || '' : '';
+
       const res = await fetch(`${API_BASE}/api/clip`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -207,6 +209,7 @@ export const App: React.FC = () => {
           format,
           quality,
           mode,
+          cookies: savedCookies || undefined,
         }),
       });
 

@@ -123,6 +123,44 @@ export const ProgressCard: React.FC<ProgressCardProps> = ({ progress, onCancel }
       {isError && (
         <div className="p-4 bg-red-950/30 border border-red-800/40 rounded-xl text-xs text-red-300 space-y-3">
           <p>{progress.error || 'An unexpected error occurred while processing the video.'}</p>
+
+          {progress.error?.includes('cloud server IP') && (
+            <div className="pt-2 border-t border-red-900/40 space-y-2.5">
+              <span className="text-[11px] text-zinc-300 font-bold block">
+                Option 1: Paste YouTube Cookies to Bypass Cloud IP Restriction:
+              </span>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  type="text"
+                  placeholder="Paste cookies or export from browser..."
+                  id="userCookieInput"
+                  defaultValue={typeof window !== 'undefined' ? localStorage.getItem('CLIPSLICE_COOKIES') || '' : ''}
+                  className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-cyan-400"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const el = document.getElementById('userCookieInput') as HTMLInputElement;
+                    if (el?.value) {
+                      localStorage.setItem('CLIPSLICE_COOKIES', el.value.trim());
+                      alert('Cookies saved! Please click Slice again to download.');
+                    }
+                  }}
+                  className="bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold px-3 py-1.5 rounded-lg text-xs transition-colors shrink-0"
+                >
+                  Save Cookies
+                </button>
+              </div>
+              <div className="text-[11px] text-zinc-400 pt-1">
+                <span>Option 2: Run locally on your PC with zero restrictions at </span>
+                <a href="http://localhost:5000" target="_blank" rel="noreferrer" className="text-cyan-400 font-mono underline font-bold">
+                  http://localhost:5000
+                </a>
+                <span> (run start.bat on your PC).</span>
+              </div>
+            </div>
+          )}
+
           {(progress.error?.includes('Vercel serverless') || progress.error?.includes('Cannot connect')) && (
             <div className="pt-2 border-t border-red-900/40 space-y-1.5">
               <span className="text-[11px] text-zinc-400 font-medium block">

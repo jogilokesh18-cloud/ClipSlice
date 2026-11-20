@@ -14,10 +14,11 @@ export interface ProcessClipOptions {
   format: 'mp4' | 'mp3';
   quality: string;
   mode?: 'fast' | 'accurate'; // 'fast' = lossless stream copy (1-2s), 'accurate' = keyframe re-encoded cut
+  cookies?: string;
 }
 
 export function startClipDownload(options: ProcessClipOptions): void {
-  const { jobId, url, title, startTime, endTime, format, quality, mode = 'fast' } = options;
+  const { jobId, url, title, startTime, endTime, format, quality, mode = 'fast', cookies } = options;
   const ext = format === 'mp3' ? 'mp3' : 'mp4';
   const outputFileName = `${jobId}.${ext}`;
   const outputPath = path.join(TEMP_DIR, outputFileName);
@@ -52,17 +53,29 @@ export function startClipDownload(options: ProcessClipOptions): void {
     }
   }
 
+  // Support client-provided cookies in request body
+  if (!cookiePath && cookies && typeof cookies === 'string' && cookies.trim()) {
+    try {
+      const clientCookieFile = path.join(TEMP_DIR, `cookies_${jobId}.txt`);
+      fs.writeFileSync(clientCookieFile, cookies.trim(), 'utf-8');
+      cookiePath = clientCookieFile;
+    } catch {
+      // ignore
+    }
+  }
+
   // Construct arguments array for safe child_process.spawn (no shell execution)
   const args: string[] = [
+    '-4', // Force IPv4 to bypass cloud datacenter IPv6 blocks
     '--no-playlist',
     '--no-mtime',
     '--no-warnings',
     '--newline',
     '--ffmpeg-location', ffmpegLoc,
-    // Node.js JS challenge solver: unlocks full 1080p, 1440p, 4K 60fps formats at high download speeds
-    '--js-runtimes', 'node',
+    // Node.js JS challenge solver
+    '--js-runtimes', `node:${process.execPath}`,
     // Fallback player clients for YouTube cloud datacenter extraction
-    '--extractor-args', 'youtube:player_client=default,ios,android,web',
+    '--extractor-args', 'youtube:player_client=android,web,default',
     '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
     // Parallel fragment downloads
     '--concurrent-fragments', '4',

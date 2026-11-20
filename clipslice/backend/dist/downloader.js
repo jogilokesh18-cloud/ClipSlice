@@ -11,7 +11,7 @@ const config_1 = require("./config");
 const jobManager_1 = require("./jobManager");
 const timeUtils_1 = require("./timeUtils");
 function startClipDownload(options) {
-    const { jobId, url, title, startTime, endTime, format, quality, mode = 'fast' } = options;
+    const { jobId, url, title, startTime, endTime, format, quality, mode = 'fast', cookies } = options;
     const ext = format === 'mp3' ? 'mp3' : 'mp4';
     const outputFileName = `${jobId}.${ext}`;
     const outputPath = path_1.default.join(config_1.TEMP_DIR, outputFileName);
@@ -42,17 +42,29 @@ function startClipDownload(options) {
             // ignore
         }
     }
+    // Support client-provided cookies in request body
+    if (!cookiePath && cookies && typeof cookies === 'string' && cookies.trim()) {
+        try {
+            const clientCookieFile = path_1.default.join(config_1.TEMP_DIR, `cookies_${jobId}.txt`);
+            fs_1.default.writeFileSync(clientCookieFile, cookies.trim(), 'utf-8');
+            cookiePath = clientCookieFile;
+        }
+        catch {
+            // ignore
+        }
+    }
     // Construct arguments array for safe child_process.spawn (no shell execution)
     const args = [
+        '-4', // Force IPv4 to bypass cloud datacenter IPv6 blocks
         '--no-playlist',
         '--no-mtime',
         '--no-warnings',
         '--newline',
         '--ffmpeg-location', ffmpegLoc,
-        // Node.js JS challenge solver: unlocks full 1080p, 1440p, 4K 60fps formats at high download speeds
-        '--js-runtimes', 'node',
+        // Node.js JS challenge solver
+        '--js-runtimes', `node:${process.execPath}`,
         // Fallback player clients for YouTube cloud datacenter extraction
-        '--extractor-args', 'youtube:player_client=default,ios,android,web',
+        '--extractor-args', 'youtube:player_client=android,web,default',
         '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
         // Parallel fragment downloads
         '--concurrent-fragments', '4',

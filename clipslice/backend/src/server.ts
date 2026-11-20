@@ -79,7 +79,7 @@ app.post('/api/metadata', async (req: Request, res: Response) => {
  */
 app.post('/api/clip', async (req: Request, res: Response) => {
   try {
-    const { url, startTime, endTime, format = 'mp4', quality = 'best', title, mode = 'fast' } = req.body;
+    const { url, startTime, endTime, format = 'mp4', quality = 'best', title, mode = 'fast', cookies } = req.body;
 
     if (!url || typeof url !== 'string') {
       return res.status(400).json({ success: false, error: 'A valid video URL is required.' });
@@ -125,6 +125,7 @@ app.post('/api/clip', async (req: Request, res: Response) => {
       format: chosenFormat,
       quality: chosenQuality,
       mode: chosenMode,
+      cookies: typeof cookies === 'string' ? cookies : undefined,
     });
 
     return res.json({
