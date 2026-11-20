@@ -1,10 +1,11 @@
 services:
   - type: web
     name: clipslice
-    env: docker
+    runtime: docker
     plan: free
     region: oregon
-    dockerfilePath: Dockerfile
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     healthCheckPath: /api/health
     envVars:
       - key: PORT
