@@ -307,9 +307,18 @@ app.delete('/api/job/:jobId', (req: Request, res: Response) => {
   return res.json({ success });
 });
 
-// Serve frontend static build if available
-const frontendDistPath = path.resolve(__dirname, '../../frontend/dist');
-if (fs.existsSync(frontendDistPath)) {
+// Serve frontend static build if available across various cloud hosting layouts
+const candidateDistPaths = [
+  path.resolve(__dirname, '../../frontend/dist'),
+  path.resolve(process.cwd(), 'dist'),
+  path.resolve(process.cwd(), 'clipslice/frontend/dist'),
+  path.resolve(__dirname, '../../../dist'),
+  path.resolve(process.cwd(), 'cut'),
+];
+
+const frontendDistPath = candidateDistPaths.find(p => fs.existsSync(p) && fs.existsSync(path.join(p, 'index.html')));
+
+if (frontendDistPath) {
   console.log(`[Static] Serving frontend from: ${frontendDistPath}`);
   app.use(express.static(frontendDistPath));
   

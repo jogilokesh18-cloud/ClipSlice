@@ -10,7 +10,7 @@
   "scripts": {
     "start": "node clipslice/backend/dist/server.js",
     "install:all": "npm install --prefix clipslice/backend && npm install --prefix clipslice/frontend",
-    "build": "(npm run build:frontend || true) && node scripts/copy-dist.js",
+    "build": "(npm run build:backend || true) && (npm run build:frontend || true) && node scripts/copy-dist.js",
     "build:all": "npm run build:backend && npm run build:frontend && node scripts/copy-dist.js",
     "build:backend": "npm run build --prefix clipslice/backend",
     "build:frontend": "npm run build --prefix clipslice/frontend",

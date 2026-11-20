@@ -8,7 +8,8 @@ clipslice/frontend/node_modules/
 
 # Build artifacts
 backend/dist/
-clipslice/backend/dist/
+!clipslice/backend/dist/
+!clipslice/backend/dist/**
 # Allow pre-built frontend dist and cut for instant, error-free Vercel and cloud deployments
 !dist/
 !dist/**

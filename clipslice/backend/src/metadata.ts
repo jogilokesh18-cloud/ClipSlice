@@ -166,13 +166,13 @@ export async function fetchVideoMetadata(rawUrl: string): Promise<VideoMetadata>
       stderr += chunk.toString('utf-8');
     });
 
-    child.on('error', (err) => {
+    child.on('error', (err: Error) => {
       clearTimeout(timeout);
       if (timedOut) return;
       reject(new Error(`Failed to start yt-dlp process: ${err.message}`));
     });
 
-    child.on('close', (code) => {
+    child.on('close', (code: number | null) => {
       clearTimeout(timeout);
       if (timedOut) return;
 
